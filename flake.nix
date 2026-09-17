@@ -87,15 +87,19 @@
           cp -r "$tree_sitter_module/include" "$tree_sitter_vendor/"
         '';
 
-        # Ebitengine GL Wrapper Requirement:
-        # Rune depends on Ebitengine, which dynamically loads OpenGL libraries (`libGL.so`, `libGLESv2.so`)
-        # at runtime by filename. On NixOS, placing `libGL` in `buildInputs` provides the library at build time,
-        # but runtime dynamic loading fails because shared objects are not in standard dynamic linker paths.
-        # Prefixing `LD_LIBRARY_PATH` with `${pkgs.libGL}/lib` via `wrapProgram` makes these unversioned shared
-        # libraries discoverable at runtime without patching vendored Ebitengine code.
+        # Ebitengine Runtime Requirement and Desktop Integration:
+        # 1. Add ${pkgs.libGL}/lib to LD_LIBRARY_PATH with wrapProgram. Ebitengine requires libGL.so at runtime.
+        # 2. Install the desktop entry and icon files. This adds Rune to application launchers like fuzzel, etc.
         postInstall = ''
           wrapProgram $out/bin/rune \
             --prefix LD_LIBRARY_PATH : "${pkgs.libGL}/lib"
+
+          install -Dm644 deploy/rune-linux/rune.desktop $out/share/applications/rune.desktop
+          install -Dm644 extra/icon.iconset/icon_512x512.png $out/share/icons/hicolor/512x512/apps/rune.png
+          install -Dm644 extra/icon.iconset/icon_256x256.png $out/share/icons/hicolor/256x256/apps/rune.png
+          install -Dm644 extra/icon.iconset/icon_128x128.png $out/share/icons/hicolor/128x128/apps/rune.png
+          install -Dm644 extra/icon.iconset/icon_32x32.png $out/share/icons/hicolor/32x32/apps/rune.png
+          install -Dm644 extra/icon.iconset/icon_16x16.png $out/share/icons/hicolor/16x16/apps/rune.png
         '';
 
         checkPhase = ''
